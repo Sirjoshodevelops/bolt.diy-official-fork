@@ -4,7 +4,6 @@ import UnoCSS from 'unocss/vite';
 import { nodePolyfills } from 'vite-plugin-node-polyfills';
 import { optimizeCssModules } from 'vite-plugin-optimize-css-modules';
 import tsconfigPaths from 'vite-tsconfig-paths';
-
 import { execSync } from 'child_process';
 
 // Get git hash with fallback
@@ -24,6 +23,9 @@ export default defineConfig((config) => {
     },
     build: {
       target: 'esnext',
+    },
+    server: {
+      allowedHosts: 'all'
     },
     plugins: [
       nodePolyfills({
@@ -52,7 +54,6 @@ export default defineConfig((config) => {
              */
             return code.replace(/from 'react-dom\/server';?/g, "from 'react-dom/server.browser';");
           }
-
           return undefined;
         },
       },
