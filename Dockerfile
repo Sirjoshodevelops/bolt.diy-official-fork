@@ -1,14 +1,9 @@
 ARG BASE=node:20.18.0
 FROM ${BASE} AS base
-
 WORKDIR /app
 
 # Install dependencies (this step is cached as long as the dependencies don't change)
 COPY package.json pnpm-lock.yaml ./
-
-#RUN npm install -g corepack@latest
-
-#RUN corepack enable pnpm && pnpm install
 RUN npm install -g pnpm && pnpm install
 
 # Copy the rest of your app's source code
@@ -48,8 +43,10 @@ ENV WRANGLER_SEND_METRICS=false \
     TOGETHER_API_BASE_URL=${TOGETHER_API_BASE_URL} \
     AWS_BEDROCK_CONFIG=${AWS_BEDROCK_CONFIG} \
     VITE_LOG_LEVEL=${VITE_LOG_LEVEL} \
-    DEFAULT_NUM_CTX=${DEFAULT_NUM_CTX}\
-    RUNNING_IN_DOCKER=true
+    DEFAULT_NUM_CTX=${DEFAULT_NUM_CTX} \
+    RUNNING_IN_DOCKER=true \
+    HOST=0.0.0.0 \
+    PORT=${PORT:-5173}
 
 # Pre-configure wrangler to disable metrics
 RUN mkdir -p /root/.config/.wrangler && \
@@ -57,14 +54,14 @@ RUN mkdir -p /root/.config/.wrangler && \
 
 RUN pnpm run build
 
-CMD [ "pnpm", "run", "dockerstart"]
+CMD [ "sh", "-c", "HOST=0.0.0.0 PORT=${PORT:-5173} pnpm run dockerstart" ]
 
 # Development image
 FROM base AS bolt-ai-development
 
 # Define the same environment variables for development
 ARG GROQ_API_KEY
-ARG HuggingFace 
+ARG HuggingFace_API_KEY
 ARG OPENAI_API_KEY
 ARG ANTHROPIC_API_KEY
 ARG OPEN_ROUTER_API_KEY
@@ -88,8 +85,11 @@ ENV GROQ_API_KEY=${GROQ_API_KEY} \
     TOGETHER_API_BASE_URL=${TOGETHER_API_BASE_URL} \
     AWS_BEDROCK_CONFIG=${AWS_BEDROCK_CONFIG} \
     VITE_LOG_LEVEL=${VITE_LOG_LEVEL} \
-    DEFAULT_NUM_CTX=${DEFAULT_NUM_CTX}\
-    RUNNING_IN_DOCKER=true
+    DEFAULT_NUM_CTX=${DEFAULT_NUM_CTX} \
+    RUNNING_IN_DOCKER=true \
+    HOST=0.0.0.0 \
+    PORT=${PORT:-5173}
 
 RUN mkdir -p ${WORKDIR}/run
-CMD pnpm run dev --host
+
+CMD [ "sh", "-c", "HOST=0.0.0.0 PORT=${PORT:-5173} pnpm run dev --host" ]
